@@ -3,7 +3,7 @@ provider "azurerm" {
 }
 
 resource "azurerm_resource_group" "rg" {
-  name     = "RG-CloudTraining-Demo-ZAN-IAC"
+  name     = "RG-CloudTraining-Demo-ZAN-IAC1"
   location = "South Africa North" 
 }
 
