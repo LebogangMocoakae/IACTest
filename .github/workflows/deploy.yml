@@ -23,6 +23,11 @@ jobs:
         run: terraform init
       - name: Terraform Apply
         run: terraform apply -auto-approve
+      - name: Upload Terraform State
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfstate
+          path: terraform.tfstate
 
   cleanup:
     runs-on: ubuntu-latest
@@ -35,11 +40,15 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.5.0"
+      - name: Download Terraform State
+        uses: actions/download-artifact@v4
+        with:
+          name: tfstate
       - name: Azure Login
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-      - name: Wait 5 minutes
+      - name: Wait 1 minute
         run: sleep 60
       - name: Terraform Init
         run: terraform init
