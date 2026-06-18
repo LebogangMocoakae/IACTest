@@ -4,7 +4,6 @@ provider "azurerm" {
 
 resource "azurerm_resource_group" "rg" {
   name     = "RG-CloudTraining-Demo-ZAN-IAC"
-  # Updated to SA North
   location = "South Africa North" 
 }
 
@@ -27,7 +26,6 @@ resource "azurerm_public_ip" "pip" {
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   allocation_method   = "Static"
-  # Standard SKU is required for some features in SA North
   sku                 = "Standard" 
 }
 
@@ -38,9 +36,34 @@ resource "azurerm_network_interface" "nic" {
 
   ip_configuration {
     name                          = "internal"
-    # Fixed: Referenced the correct resource name
     subnet_id                     = azurerm_subnet.subnet.id 
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.pip.id
+  }
+}
+
+resource "azurerm_linux_virtual_machine" "vm" {
+  name                = "my-vm"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
+  size                = "Standard_D4s_v3" # This size provides 4 vCPUs
+  admin_username      = "adminuser"
+  network_interface_ids = [azurerm_network_interface.nic.id]
+
+  admin_ssh_key {
+    username   = "adminuser"
+    public_key = file("~/.ssh/id_rsa.pub") # Ensure this file exists
+  }
+
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts"
+    version   = "latest"
   }
 }
