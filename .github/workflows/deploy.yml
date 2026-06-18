@@ -3,10 +3,10 @@ on:
   push:
     branches: [ "main" ]
 
-# OIDC permissions are not required for Client Secret auth
 jobs:
   terraform:
     runs-on: ubuntu-latest
+    environment: iactest  # <--- THIS IS REQUIRED
     steps:
       - uses: actions/checkout@v4
 
