@@ -4,7 +4,8 @@ provider "azurerm" {
 
 resource "azurerm_resource_group" "rg" {
   name     = "RG-CloudTraining-Demo-ZAN"
-  location = "South Africa North" ; Updated to SA North
+  # Updated to SA North
+  location = "South Africa North" 
 }
 
 resource "azurerm_virtual_network" "vnet" {
@@ -26,7 +27,8 @@ resource "azurerm_public_ip" "pip" {
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   allocation_method   = "Static"
-  sku                 = "Standard" ; Standard SKU is required for some features in SA North
+  # Standard SKU is required for some features in SA North
+  sku                 = "Standard" 
 }
 
 resource "azurerm_network_interface" "nic" {
@@ -36,7 +38,8 @@ resource "azurerm_network_interface" "nic" {
 
   ip_configuration {
     name                          = "internal"
-    subnet_id                     = azurerm_subnet.nic.id ; Correction: Use the correct reference
+    # Fixed: Referenced the correct resource name
+    subnet_id                     = azurerm_subnet.subnet.id 
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.pip.id
   }
