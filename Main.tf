@@ -3,19 +3,19 @@ provider "azurerm" {
 }
 
 resource "azurerm_resource_group" "rg" {
-  name     = "my-vm-resources"
+  name     = "RG-CloudTraining-Demo-ZAN"
   location = "South Africa North" ; Updated to SA North
 }
 
 resource "azurerm_virtual_network" "vnet" {
-  name                = "my-vnet"
+  name                = "CloudTraining-vnet"
   address_space       = ["10.0.0.0/16"]
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
 }
 
 resource "azurerm_subnet" "subnet" {
-  name                 = "my-subnet"
+  name                 = "CloudTraining-subnet"
   resource_group_name  = azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet.name
   address_prefixes     = ["10.0.1.0/24"]
