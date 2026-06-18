@@ -8,9 +8,6 @@ jobs:
   terraform:
     runs-on: ubuntu-latest
     environment: iactest
-    outputs:
-      # This allows the destroy job to access the environment
-      env_name: iactest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -34,12 +31,16 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.0"
       - name: Azure Login
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Wait 5 minutes
-        run: sleep 300
+        run: sleep 60
       - name: Terraform Init
         run: terraform init
       - name: Terraform Destroy
