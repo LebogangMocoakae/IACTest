@@ -6,9 +6,14 @@ on:
 jobs:
   terraform:
     runs-on: ubuntu-latest
-    environment: iactest  # <--- THIS IS REQUIRED
+    environment: iactest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.0"
 
       - name: 'Azure Login'
         uses: azure/login@v2
