@@ -1,18 +1,15 @@
-name: 'Terraform Deploy via Power Automate'
+name: 'Terraform Deploy'
 
 on:
   push:
     branches: [ "main" ]
-  repository_dispatch:
-    types: [ power_automate_approved ]
 
 jobs:
-  # ==========================================
-  # PHASE 1: Triggers when code is pushed
-  # ==========================================
-  request_approval:
-    if: github.event_name == 'push'
+  # JOB 1: Reads the TTL file immediately on push
+  prep:
     runs-on: ubuntu-latest
+    outputs:
+      ttl_minutes: ${{ steps.get_ttl.outputs.minutes }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -20,31 +17,25 @@ jobs:
       - name: Read TTL Config
         id: get_ttl
         run: |
-          if [ -f ttl.txt ]; then
-            TTL=$(cat ttl.txt | tr -d '[:space:]')
-            echo "minutes=$TTL" >> $GITHUB_OUTPUT
-          else
-            echo "minutes=60" >> $GITHUB_OUTPUT
-          fi
+          TTL=$(cat ttl.txt)
+          TTL_CLEANED=$(echo $TTL | tr -d '[:space:]')
+          echo "minutes=$TTL_CLEANED" >> $GITHUB_OUTPUT
 
-      - name: Send Hook to Power Automate
-        run: |
-          curl -X POST "${{ secrets.POWER_AUTOMATE_WEBHOOK_URL }}" \
-          -H "Content-Type: application/json" \
-          -d '{
-            "repository": "${{ github.repository }}",
-            "actor": "${{ github.actor }}",
-            "ttl": "${{ steps.get_ttl.outputs.minutes }}",
-            "commit_msg": "${{ github.event.head_commit.message }}"
-          }'
-
-  # ==========================================
-  # PHASE 2: Triggers ONLY after Power Automate Approves
-  # ==========================================
-  terraform_deploy:
-    if: github.event_name == 'repository_dispatch'
+  # JOB 2: Requests approval. The email will show the TTL.
+  gate:
+    needs: prep
+    name: Approve Deployment (TTL:${{ needs.prep.outputs.ttl_minutes }}m)
     runs-on: ubuntu-latest
-    environment: iactest
+    environment: iactest-approval #environment in GitHub for your approval gate
+    steps:
+      - name: Gate Passed
+        run: echo "Approval received. Proceeding to deployment..."
+
+  # JOB 3:
+  terraform:
+    needs: [prep, gate]
+    runs-on: ubuntu-latest
+    environment: iactest  
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -71,11 +62,11 @@ jobs:
           name: tfstate
           path: terraform.tfstate
 
+  # JOB 4: Cleans up automatically using your original iactest environment secrets
   cleanup:
-    if: github.event_name == 'repository_dispatch'
     runs-on: ubuntu-latest
-    needs: terraform_deploy
-    environment: iactest
+    needs: [prep, terraform]
+    environment: iactest  # Added back so it can read your secret, but won't prompt for approval if configured below
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -97,9 +88,7 @@ jobs:
 
       - name: Wait for designated duration
         run: |
-          MINUTES=${{ github.event.client_payload.ttl }}
-          # Fallback to 60 if payload is empty
-          MINUTES=${MINUTES:-60}
+          MINUTES=${{ needs.prep.outputs.ttl_minutes }}
           SECONDS=$((MINUTES * 60))
           echo "Environment will stay up for $MINUTES minutes ($SECONDS seconds)..."
           sleep $SECONDS
