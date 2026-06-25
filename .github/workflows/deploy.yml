@@ -26,14 +26,15 @@ jobs:
           fi
 
       - name: Send Hook to Power Automate
-        run: |
+       run: |
           curl -X POST "${{ secrets.POWER_AUTOMATE_WEBHOOK_URL }}" \
           -H "Content-Type: application/json" \
           -d '{
             "repository": "${{ github.repository }}",
             "actor": "${{ github.actor }}",
             "ttl": "${{ steps.get_ttl.outputs.minutes }}",
-            "commit_msg": "${{ github.event.head_commit.message }}"
+            "commit_msg": "${{ github.event.head_commit.message }}",
+            "commit_sha": "${{ github.sha }}"
           }'
 
   # PHASE 2: Triggers ONLY after Power Automate Approves
