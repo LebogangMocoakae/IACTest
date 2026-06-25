@@ -26,7 +26,7 @@ jobs:
           fi
 
       - name: Send Hook to Power Automate
-       run: |
+        run: |
           curl -X POST "${{ secrets.POWER_AUTOMATE_WEBHOOK_URL }}" \
           -H "Content-Type: application/json" \
           -d '{
@@ -38,7 +38,6 @@ jobs:
           }'
 
   # PHASE 2: Triggers ONLY after Power Automate Approves
-
   terraform_deploy:
     if: github.event_name == 'repository_dispatch'
     runs-on: ubuntu-latest
@@ -96,7 +95,6 @@ jobs:
       - name: Wait for designated duration
         run: |
           MINUTES=${{ github.event.client_payload.ttl }}
-          # Fallback to 60 if payload is empty
           MINUTES=${MINUTES:-60}
           SECONDS=$((MINUTES * 60))
           echo "Environment will stay up for $MINUTES minutes ($SECONDS seconds)..."
